@@ -23,6 +23,7 @@ import Search from "./pages/Search";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminFeatured from "./pages/admin/AdminFeatured";
+import UserOrders from "./pages/user/UserOrders";
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
                   <Route path="/vendor/settings" element={<VendorSettings />} />
                   <Route path="/admin/featured" element={<AdminFeatured />} />
                   <Route path="/admin/vendors" element={<VendorOnboarding />} />
+                  <Route path="/user/orders" element={<UserOrders />} />
                 </Routes>
               </main>
             </div>

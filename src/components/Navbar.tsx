@@ -295,14 +295,16 @@ export default function Navbar() {
 
             {/* --- أيقونة السلة --- */}
             {(currentUser?.role === "USER" || currentUser?.role === "CUSTOMER") && (
-              <Link to="/cart" className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors relative">
+              <><Link to="/cart" className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors relative">
                 <ShoppingBag className="w-5 h-5" />
                 {totalItems > 0 && (
                   <span className="absolute -top-1 -end-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                     {totalItems}
                   </span>
                 )}
-              </Link>
+              </Link><Link to="/user/orders" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}>
+                  <Package className="w-4 h-4" /> طلباتي السابقة
+                </Link></>
             )}
 
           </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ShoppingCart, ShieldCheck, Truck, RefreshCcw, Loader2, AlertCircle, Ruler, X, User, Tag } from "lucide-react";
+import { ShoppingCart, ShieldCheck, Truck, RefreshCcw, Loader2, AlertCircle, Ruler, X, User, Tag, Store, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "../contexts/CartContext";
 
@@ -118,7 +118,6 @@ export default function ProductDetails() {
     const cartItemId = selectedSize ? `${product.id}-${selectedSize.size}` : product.id;
     const cartItemTitle = selectedSize ? `${product.title} - قياس (${selectedSize.size})` : product.title;
 
-    // 🔴 تم التعديل هنا ليأخذ السعر المخصوم إن وجد 🔴
     const finalPrice = product.discountedPrice ? product.discountedPrice : product.price;
 
     addToCart({
@@ -154,8 +153,15 @@ export default function ProductDetails() {
         <div className="space-y-4">
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="aspect-square rounded-2xl overflow-hidden bg-white border border-neutral-200 dark:border-neutral-700"
+            className="aspect-square rounded-2xl overflow-hidden bg-white border border-neutral-200 dark:border-neutral-700 relative"
           >
+            {/* 🌟 شارة Best Choice 🌟 */}
+            {product.isFeatured && (
+              <div className="absolute top-4 start-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg z-10 animate-in fade-in zoom-in duration-300">
+                <Star className="w-4 h-4 fill-white" />
+                <span>Best Choice</span>
+              </div>
+            )}
             <img 
               src={selectedImage || "https://placehold.co/800x800?text=No+Image"} 
               alt={product.title} 
@@ -187,10 +193,18 @@ export default function ProductDetails() {
             {product.title}
           </h1>
           
-          <div className="flex items-center gap-4 mb-6">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-2">
-              متجر: <span className="font-bold text-neutral-900 dark:text-white">{product.vendor?.storeName || "غير معروف"}</span>
-            </p>
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            {/* 🌟 رابط المتجر 🌟 */}
+            {product.vendorId && (
+              <Link 
+                to={`/store/${product.vendorId}`} 
+                className="flex items-center gap-1.5 text-sm font-bold text-neutral-700 bg-neutral-100 hover:bg-emerald-50 hover:text-emerald-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800"
+                title="اضغط لزيارة متجر البائع"
+              >
+                <Store className="w-4 h-4" /> 
+                {product.vendor?.storeName || "متجر"}
+              </Link>
+            )}
             
             <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
               isStoreCurrentlyOpen 
@@ -202,7 +216,6 @@ export default function ProductDetails() {
             </span>
           </div>
 
-          {/* 🔴 تم التعديل هنا لعرض السعر المشطوب وشارة الخصم 🔴 */}
           <div className="flex flex-wrap items-center gap-3 mb-8">
             {product.discountedPrice ? (
               <>
@@ -245,7 +258,7 @@ export default function ProductDetails() {
                   )}
                 </div>
                 {selectedSize && (
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
                     متوفر {selectedSize.stock} قطع
                   </span>
                 )}
@@ -319,7 +332,7 @@ export default function ProductDetails() {
             <div className="mb-8">
               <Link 
                 to="/login"
-                className="w-full h-12 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-bold rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
+                className="w-full h-12 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-bold rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 shadow-md"
               >
                 <User className="w-5 h-5" /> يرجى تسجيل الدخول كزبون لتتمكن من الشراء
               </Link>
@@ -349,7 +362,7 @@ export default function ProductDetails() {
         {isSizeChartOpen && SIZE_CHARTS[product.category] && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}

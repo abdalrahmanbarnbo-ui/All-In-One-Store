@@ -454,7 +454,19 @@ app.put("/api/vendor/orders/:id/status", authenticateToken, isApprovedVendor, as
 // 7. مسارات الآدمن (Admin API)
 // ==========================================
 // جلب المنتجات التي طلب أصحابها تمييزها، بالإضافة للمميزة حالياً (للآدمن)
-  app.get("/api/admin/feature-requests", authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
+// 1. جلب طلبات الزبون (لصفحة المشتري)
+  app.get("/api/user/orders", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const orders = await prisma.order.findMany({
+        where: { userId: req.user.id }, // يجلب طلبات هذا المستخدم فقط
+        orderBy: { createdAt: "desc" }
+      });
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ error: "فشل في جلب الطلبات." });
+    }
+  }); 
+app.get("/api/admin/feature-requests", authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const products = await prisma.product.findMany({
         where: {
@@ -529,7 +541,36 @@ app.get("/api/admin/activation-codes", authenticateToken, isAdmin, async (req, r
     res.status(500).json({ error: "فشل في جلب الأكواد." });
   }
 });
+app.post("/api/products/:id/rate", authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+      const { rating } = req.body;
+      const productId = req.params.id;
+      const userId = req.user.id;
 
+      if (rating < 1 || rating > 5) return res.status(400).json({ error: "تقييم غير صالح" });
+
+      // حفظ أو تحديث التقييم في جدول المراجعات
+      await prisma.review.upsert({
+        where: { userId_productId: { userId, productId } },
+        update: { rating },
+        create: { rating, userId, productId }
+      });
+
+      // حساب المتوسط الحسابي الجديد لنجوم المنتج
+      const allReviews = await prisma.review.findMany({ where: { productId } });
+      const avgRating = allReviews.reduce((acc, curr) => acc + curr.rating, 0) / allReviews.length;
+
+      // تحديث بيانات المنتج
+      await prisma.product.update({
+        where: { id: productId },
+        data: { rating: avgRating, reviewsCount: allReviews.length }
+      });
+
+      res.json({ message: "شكراً لتقييمك!" });
+    } catch (error) {
+      res.status(500).json({ error: "فشل التقييم." });
+    }
+  });
 app.post("/api/admin/activation-codes", authenticateToken, isAdmin, async (req, res) => {
   try {
     const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();

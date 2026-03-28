@@ -63,6 +63,8 @@ model Product {
  isFeatured         Boolean  @default(false)
   featureRequest     String   @default("NONE") // الحالات ستكون: NONE, PENDING, REJECTED
   createdAt       DateTime      @default(now())
+  rating       Float    @default(0)
+  reviewsCount Int      @default(0)
 }
 
 model Order {
@@ -122,4 +124,13 @@ model AdRequest {
   vendor    VendorProfile @relation(fields: [vendorId], references: [id])
   
   createdAt DateTime @default(now())
+}
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId]) // يمنع الزبون من تقييم نفس المنتج أكثر من مرة
 }

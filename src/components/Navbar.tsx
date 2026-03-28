@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingBag, Search, User, Menu, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Store, Megaphone, Loader2, X, Star } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -9,7 +9,6 @@ export default function Navbar() {
   const { totalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { lang, setLang, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
@@ -20,8 +19,11 @@ export default function Navbar() {
   const [liveResults, setLiveResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // --- 🌟 حالة قائمة الموبايل 🌟 ---
+  // --- 🌟 حالة القوائم والمراجع (Refs) 🌟 ---
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   
   // حالة لحفظ بيانات المستخدم المسجل
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -38,6 +40,25 @@ export default function Navbar() {
       setCurrentUser(null);
     }
   }, [location.pathname]);
+
+  // 🌟 إغلاق القوائم عند النقر خارجها (Click Outside) 🌟
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // إغلاق قائمة المستخدم
+      if (isProfileOpen && profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+      // إغلاق قائمة الموبايل
+      if (isMobileMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileOpen, isMobileMenuOpen]);
 
   // دالة تسجيل الخروج
   const handleLogout = () => {
@@ -90,7 +111,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo & Mobile Menu */}
-          <div className="flex items-center">
+          <div className="flex items-center" ref={mobileMenuRef}>
             {/* 🌟 زر قائمة الموبايل 🌟 */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -223,58 +244,55 @@ export default function Navbar() {
               </form>
             </div>
             
-           {/* Profile Actions */}
-<div className="relative">
-  {currentUser ? (
-    // إذا كان المستخدم مسجلاً: نفتح القائمة المنسدلة للخيارات (Logout, Dashboard... إلخ)
-    <>
-      <button 
-        onClick={() => setIsProfileOpen(!isProfileOpen)} 
-        className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors flex items-center gap-1 relative"
-      >
-        <User className="w-5 h-5" />
-        <span className="absolute top-1 end-1 w-2 h-2 bg-emerald-500 rounded-full"></span>
-      </button>
-      
-      {isProfileOpen && (
-        <div className="absolute end-0 mt-2 w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-lg border border-neutral-100 dark:border-neutral-800 py-2 overflow-hidden z-50 animate-in fade-in zoom-in duration-200">
-          <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 mb-2">
-            <p className="text-sm font-bold text-neutral-900 dark:text-white truncate">{currentUser.name}</p>
-            <p className="text-xs text-neutral-500 capitalize">{currentUser.role?.toLowerCase()}</p>
-          </div>
+            {/* 🌟 Profile Actions (مع Click Outside) 🌟 */}
+            <div className="relative" ref={profileRef}>
+              {currentUser ? (
+                <>
+                  <button 
+                    onClick={() => setIsProfileOpen(!isProfileOpen)} 
+                    className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors flex items-center gap-1 relative"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="absolute top-1 end-1 w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  </button>
+                  
+                  {isProfileOpen && (
+                    <div className="absolute end-0 mt-2 w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-lg border border-neutral-100 dark:border-neutral-800 py-2 overflow-hidden z-50 animate-in fade-in zoom-in duration-200">
+                      <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 mb-2">
+                        <p className="text-sm font-bold text-neutral-900 dark:text-white truncate">{currentUser.name}</p>
+                        <p className="text-xs text-neutral-500 capitalize">{currentUser.role?.toLowerCase()}</p>
+                      </div>
 
-          {/* روابط الآدمن */}
-          {currentUser.role === "ADMIN" && (
-            <>
-              <Link to="/admin/vendors" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><LayoutDashboard className="w-4 h-4" /> إدارة البائعين</Link>
-              <Link to="/admin/featured" className="flex items-center gap-2 px-4 py-2 text-sm text-amber-600 font-bold hover:bg-amber-50" onClick={() => setIsProfileOpen(false)}><Star className="w-4 h-4 fill-amber-500" /> أفضل الخيارات</Link>
-              <Link to="/admin/orders" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><Package className="w-4 h-4" /> إدارة الطلبات</Link>
-            </>
-          )}
+                      {currentUser.role === "ADMIN" && (
+                        <>
+                          <Link to="/admin/vendors" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><LayoutDashboard className="w-4 h-4" /> إدارة البائعين</Link>
+                          <Link to="/admin/featured" className="flex items-center gap-2 px-4 py-2 text-sm text-amber-600 font-bold hover:bg-amber-50" onClick={() => setIsProfileOpen(false)}><Star className="w-4 h-4 fill-amber-500" /> أفضل الخيارات</Link>
+                          <Link to="/admin/orders" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><Package className="w-4 h-4" /> إدارة الطلبات</Link>
+                        </>
+                      )}
 
-          {/* روابط البائع */}
-          {currentUser.role === "VENDOR" && (
-            <>
-              <Link to="/vendor/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><LayoutDashboard className="w-4 h-4" /> إدارة متجري</Link>
-              <Link to="/vendor/orders" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><Package className="w-4 h-4" /> طلبات الزبائن</Link>
-            </>
-          )}
+                      {currentUser.role === "VENDOR" && (
+                        <>
+                          <Link to="/vendor/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><LayoutDashboard className="w-4 h-4" /> إدارة متجري</Link>
+                          <Link to="/vendor/orders" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><Package className="w-4 h-4" /> طلبات الزبائن</Link>
+                        </>
+                      )}
 
-          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2 mt-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors font-bold border-t border-neutral-100 dark:border-neutral-800 pt-3"><LogOut className="w-4 h-4" /> تسجيل الخروج</button>
-        </div>
-      )}
-    </>
-  ) : (
-    // 🌟 إذا لم يكن مسجلاً: نجعله رابطاً مباشراً لصفحة Login 🌟
-    <Link 
-      to="/login" 
-      className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-      title="تسجيل الدخول"
-    >
-      <User className="w-5 h-5" />
-    </Link>
-  )}
-</div>
+                      <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2 mt-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-left transition-colors font-bold border-t border-neutral-100 dark:border-neutral-800 pt-3"><LogOut className="w-4 h-4" /> تسجيل الخروج</button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link 
+                  to="/login" 
+                  className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                  title="تسجيل الدخول"
+                >
+                  <User className="w-5 h-5" />
+                </Link>
+              )}
+            </div>
+
             {/* --- أيقونة السلة --- */}
             {(currentUser?.role === "USER" || currentUser?.role === "CUSTOMER") && (
               <Link to="/cart" className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors relative">

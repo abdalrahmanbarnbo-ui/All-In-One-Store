@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useCart } from "../contexts/CartContext";
-import { PackageOpen, Loader2, ChevronLeft, ChevronRight, TrendingUp, Tag, Store } from "lucide-react";
+import { PackageOpen, Loader2, ChevronLeft, ChevronRight, TrendingUp, Tag, Store, Star } from "lucide-react"; // تم استيراد Star 🌟
 
 const CATEGORIES = [
   { id: "women", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop" },
@@ -196,7 +196,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-            <Tag className="w-6 h-6 text-emerald-600" /> {t("bestChoice") || "Best Choice"}
+            <Star className="w-6 h-6 text-amber-500 fill-amber-500" /> {t("bestChoice") || "Best Choice"}
           </h2>
         </div>
         
@@ -216,28 +216,44 @@ export default function Home() {
               <motion.div key={product.id} whileHover={{ y: -5 }} className="group cursor-pointer">
                 <Link to={`/product/${product.id}`} className="block h-full">
                   
-                  <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 rounded-lg border border-neutral-200 dark:border-neutral-700">
+                  {/* حاوية الصورة مع إطار ذهبي وتأثير إضاءة (Glow) للمنتج المميز */}
+                  <div className={`relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 rounded-xl border transition-all duration-300 ${product.isFeatured !== false ? 'border-amber-200 dark:border-amber-900/50 shadow-[0_0_15px_rgba(245,158,11,0.15)] group-hover:shadow-[0_0_25px_rgba(245,158,11,0.3)]' : 'border-neutral-200 dark:border-neutral-700'}`}>
+                    
+                    {/* 🌟 حاوية الشارات الذكية (Flex) في الزاوية العلوية 🌟 */}
+                    <div className="absolute top-2 start-2 flex flex-col gap-1.5 z-20">
+                      
+                      {/* شارة التمييز (Best Choice) */}
+                      {product.isFeatured !== false && (
+                        <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1 shadow-md animate-in fade-in zoom-in duration-300">
+                          <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-white" />
+                          <span>Best Choice</span>
+                        </div>
+                      )}
+
+                      {/* شارة نفاذ الكمية */}
+                      {product.stock === 0 && (
+                        <div className="bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-md shadow-md w-fit">
+                          نفدت الكمية
+                        </div>
+                      )}
+                    </div>
+
                     <img 
                       src={product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/400x500?text=No+Image"} 
                       alt={product.title} 
                       className="w-full h-full object-contain p-2 bg-white group-hover:scale-105 transition-transform duration-500"
                     />
-                    
-                    {product.stock === 0 && (
-                      <div className="absolute top-2 start-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-sm z-10">
-                        نفدت الكمية
-                      </div>
-                    )}
 
+                    {/* شارة الخصم في الجهة المقابلة */}
                     {product.discountedPrice && product.stock > 0 && (
-                      <div className="absolute top-2 end-2 bg-red-500 text-white text-[10px] sm:text-xs font-black px-2 py-1 rounded shadow-sm z-10 animate-pulse">
+                      <div className="absolute top-2 end-2 bg-red-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 rounded shadow-md z-10 animate-pulse">
                         خصم!
                       </div>
                     )}
 
-                    {/* الإضافة السريعة تظهر للزبون فقط وتستخدم دالة addToCart الحقيقية */}
+                    {/* الإضافة السريعة */}
                     {(currentUser?.role === "USER" || currentUser?.role === "CUSTOMER") && (
-                      <div className="absolute bottom-0 start-0 end-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-0 start-0 end-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
                         <button 
                           disabled={product.stock === 0}
                           onClick={(e) => handleQuickAdd(e, product)}

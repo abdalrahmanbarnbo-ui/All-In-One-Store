@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  phoneNumber String
+  role        String   @default("CUSTOMER") // CUSTOMER, VENDOR, ADMIN
+
+  vendorProfile VendorProfile?
+  orders        Order[]
+
+  createdAt DateTime @default(now())
+}
+
+model VendorProfile {
+  id               String          @id @default(uuid())
+  storeName        String
+  isApproved       Boolean         @default(false)
+  
+  openTime         String          @default("09:00")
+  closeTime        String          @default("22:00")
+  daysOff          String[]        @default([])      
+  isManuallyClosed Boolean         @default(false)   
+
+  userId           String          @unique
+  user             User            @relation(fields: [userId], references: [id])
+  
+  activationCode   ActivationCode? 
+  products         Product[]       
+  adRequests       AdRequest[]     
+}
+
+model ActivationCode {
+  id             String          @id @default(uuid())
+  code           String          @unique
+  isUsed         Boolean         @default(false)
+  usedByVendorId String?         @unique
+  vendorProfile  VendorProfile?  @relation(fields: [usedByVendorId], references: [id])
+  createdAt      DateTime        @default(now())
+}
+
+model Product {
+  id              String        @id @default(uuid())
+  title           String
+  description     String
+  price           Float         // السعر الأساسي
+  discountedPrice Float?        // السعر بعد الخصم (اختياري)
+  stock           Int      
+  category        String
+  images          String[]      @default([]) 
+  sizes           Json          @default("[]") 
+  vendorId        String
+  vendor          VendorProfile @relation(fields: [vendorId], references: [id])
+  isFeatured      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  total         Float
+  status        String      @default("قيد المعالجة")
+  paymentMethod String
+  city          String
+  address       String
+  phone         String
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+
+  items         OrderItem[]
+  payment       Payment?
+
+  createdAt     DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  quantity  Int
+  price     Float
+  title     String
+  vendorId  String? // مخزن كنص للرجوع إليه دون ربط إجباري (ممارسة ممتازة لحفظ تاريخ الطلب)
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  method     String   // "COD", "SyriatelCash", "MTNCash", "BankTransfer"
+  receiptRef String?
+  status     String   // "PENDING", "VERIFIED", "FAILED"
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Governorate {
+  id          String @id @default(uuid())
+  name        String
+  deliveryFee Float
+}
+
+model AdRequest {
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String
+  status    String   @default("PENDING") 
+  
+  duration  Int      @default(7) 
+  expiresAt DateTime?             
+  
+  vendorId  String
+  vendor    VendorProfile @relation(fields: [vendorId], references: [id])
+  
+  createdAt DateTime @default(now())
+}

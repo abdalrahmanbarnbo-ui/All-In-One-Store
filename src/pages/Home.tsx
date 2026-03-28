@@ -7,7 +7,7 @@ import { PackageOpen, Loader2, ChevronLeft, ChevronRight, TrendingUp, Tag, Store
 
 const CATEGORIES = [
   { id: "women", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop" },
-  { id: "men", image: "https://images.unsplash.com/photo-1490578474895-699bc4e3f444?q=80&w=400&auto=format&fit=crop" },
+  { id: "men", image: "https://thumbs.dreamstime.com/b/portrait-handsome-smiling-young-man-folded-arms-smiling-joyful-cheerful-men-crossed-hands-isolated-studio-shot-172869765.jpg?w=576" },
   { id: "kids", image: "https://images.unsplash.com/photo-1519241047957-be31d7379a5d?q=80&w=400&auto=format&fit=crop" },
   { id: "beauty", image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=400&auto=format&fit=crop" },
   { id: "home", image: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=400&auto=format&fit=crop" },

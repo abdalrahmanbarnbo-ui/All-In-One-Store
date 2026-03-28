@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Package, Plus, Trash2, AlertCircle, ImagePlus, X, UploadCloud, Ruler, Store, Tag, Percent } from "lucide-react";
+import { Package, Plus, Trash2, AlertCircle, ImagePlus, X, UploadCloud, Ruler, Store, Tag, Percent, Star } from "lucide-react";
 
 // خريطة القياسات الديناميكية
 const SIZE_CATEGORIES: Record<string, string[]> = {
@@ -17,7 +17,7 @@ export default function VendorDashboard() {
   const [isApproved, setIsApproved] = useState(false);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
 
-  // حالة إضافة منتج جديد (شاملة سعر الخصم)
+  // حالة إضافة منتج جديد
   const [newProduct, setNewProduct] = useState({ 
     title: "", description: "", price: "", discountedPrice: "", category: "ملابس نسائية", images: [] as string[],
     sizes: [] as { size: string, stock: number }[] 
@@ -27,7 +27,7 @@ export default function VendorDashboard() {
   const [currentStock, setCurrentStock] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🚀 حالات النافذة المنبثقة للخصم السريع 🚀
+  // حالات النافذة المنبثقة للخصم السريع
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const [selectedProductForDiscount, setSelectedProductForDiscount] = useState<any>(null);
   const [quickDiscountValue, setQuickDiscountValue] = useState("");
@@ -108,13 +108,11 @@ export default function VendorDashboard() {
     setNewProduct({ ...newProduct, sizes: newProduct.sizes.filter((_, i) => i !== indexToRemove) });
   };
 
-  // --- دالة نشر منتج جديد ---
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newProduct.images.length === 0) return setError("يجب إضافة صورة واحدة على الأقل.");
     if (newProduct.sizes.length === 0) return setError("يجب إضافة قياس واحد وكميته على الأقل.");
     
-    // التحقق من أن سعر الخصم منطقي
     if (newProduct.discountedPrice && parseFloat(newProduct.discountedPrice) >= parseFloat(newProduct.price)) {
       return setError("يجب أن يكون سعر الخصم أقل من السعر الأساسي!");
     }
@@ -135,7 +133,6 @@ export default function VendorDashboard() {
     } catch (err) { setError("حدث خطأ في الاتصال."); } finally { setIsSubmitting(false); }
   };
 
-  // --- دالة حذف المنتج ---
   const handleDelete = async (id: string) => {
     if (!window.confirm("هل أنت متأكد من حذف هذا المنتج نهائياً؟")) return;
     try {
@@ -145,7 +142,6 @@ export default function VendorDashboard() {
     } catch (err) { console.error(err); }
   };
 
-  // --- دوال الخصم السريع ---
   const openDiscountModal = (product: any) => {
     setSelectedProductForDiscount(product);
     setQuickDiscountValue(product.discountedPrice ? product.discountedPrice.toString() : "");
@@ -153,7 +149,6 @@ export default function VendorDashboard() {
   };
 
   const handleApplyQuickDiscount = async () => {
-    // التحقق من المنطق
     if (quickDiscountValue && parseFloat(quickDiscountValue) >= selectedProductForDiscount.price) {
       alert("سعر الخصم يجب أن يكون أقل من السعر الأساسي للمنتج!");
       return;
@@ -165,7 +160,7 @@ export default function VendorDashboard() {
       const res = await fetch(`/api/vendor/products/${selectedProductForDiscount.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ discountedPrice: quickDiscountValue }) // يرسل القيمة أو نص فارغ لإزالتها
+        body: JSON.stringify({ discountedPrice: quickDiscountValue }) 
       });
       if (res.ok) {
         fetchProducts();
@@ -177,6 +172,27 @@ export default function VendorDashboard() {
       alert("حدث خطأ في الاتصال.");
     } finally {
       setIsApplyingDiscount(false);
+    }
+  };
+
+  // 🌟 دالة إرسال طلب التمييز (Best Choice) للآدمن 🌟
+  const requestFeature = async (productId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/vendor/products/${productId}/request-feature`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        alert("تم إرسال طلب التمييز بنجاح للآدمن!");
+        fetchProducts(); // تحديث القائمة لإظهار حالة "قيد المراجعة"
+      } else {
+        alert(data.error || "حدث خطأ أثناء إرسال الطلب.");
+      }
+    } catch (error) {
+      alert("تعذر الاتصال بالخادم.");
     }
   };
 
@@ -329,7 +345,23 @@ export default function VendorDashboard() {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex justify-center gap-3 items-center h-full">
+                      <div className="flex justify-center gap-2 items-center h-full flex-wrap">
+                        
+                        {/* 🌟 زر/حالة التمييز (Best Choice) 🌟 */}
+                        {product.isFeatured ? (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1.5 rounded-lg flex items-center gap-1 cursor-default" title="منتج مميز ومقبول">
+                            <Star className="w-3 h-3 fill-amber-500" /> مميز
+                          </span>
+                        ) : product.featureRequest === "PENDING" ? (
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-1.5 rounded-lg flex items-center gap-1 cursor-default" title="قيد المراجعة من الإدارة">
+                            ⏳ مراجعة
+                          </span>
+                        ) : (
+                          <button onClick={() => requestFeature(product.id)} className="text-amber-500 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 p-2 rounded-lg transition-colors" title="طلب عرض المنتج كـ Best Choice">
+                            <Star className="w-4 h-4" />
+                          </button>
+                        )}
+
                         {/* زر الخصم السريع */}
                         <button onClick={() => openDiscountModal(product)} className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors" title="إضافة / تعديل الخصم">
                           <Percent className="w-4 h-4" />
@@ -351,7 +383,7 @@ export default function VendorDashboard() {
         </div>
       </div>
 
-      {/* 🚀 النافذة المنبثقة للخصم السريع (Quick Discount Modal) 🚀 */}
+      {/* النافذة المنبثقة للخصم السريع */}
       {discountModalOpen && selectedProductForDiscount && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">

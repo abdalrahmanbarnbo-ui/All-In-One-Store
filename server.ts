@@ -419,7 +419,24 @@ app.get("/api/vendor/orders", authenticateToken, isApprovedVendor, async (req: A
     res.status(500).json({ error: "فشل في جلب طلبات المتجر." });
   }
 });
+// إرسال طلب لتمييز المنتج (Best Choice)
+  app.post("/api/vendor/products/:id/request-feature", authenticateToken, isApprovedVendor, async (req: AuthRequest, res: Response) => {
+    try {
+      const product = await prisma.product.findUnique({ where: { id: req.params.id, vendorId: req.user.vendorProfileId } });
+      if (!product) return res.status(404).json({ error: "المنتج غير موجود." });
+      
+      if (product.isFeatured) return res.status(400).json({ error: "المنتج مميز بالفعل." });
+      if (product.featureRequest === "PENDING") return res.status(400).json({ error: "يوجد طلب قيد المراجعة لهذا المنتج." });
 
+      const updatedProduct = await prisma.product.update({
+        where: { id: req.params.id },
+        data: { featureRequest: "PENDING" }
+      });
+      res.json({ message: "تم إرسال طلب التمييز للإدارة بنجاح.", product: updatedProduct });
+    } catch (error) {
+      res.status(500).json({ error: "فشل في إرسال الطلب." });
+    }
+  });
 app.put("/api/vendor/orders/:id/status", authenticateToken, isApprovedVendor, async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body;
@@ -436,6 +453,51 @@ app.put("/api/vendor/orders/:id/status", authenticateToken, isApprovedVendor, as
 // ==========================================
 // 7. مسارات الآدمن (Admin API)
 // ==========================================
+// جلب المنتجات التي طلب أصحابها تمييزها، بالإضافة للمميزة حالياً (للآدمن)
+  app.get("/api/admin/feature-requests", authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const products = await prisma.product.findMany({
+        where: {
+          OR: [
+            { featureRequest: "PENDING" },
+            { isFeatured: true }
+          ]
+        },
+        include: { vendor: { select: { storeName: true } } },
+        orderBy: { createdAt: "desc" }
+      });
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ error: "فشل في جلب طلبات التمييز." });
+    }
+  });
+
+  // قبول أو رفض أو إزالة تمييز المنتج (للآدمن)
+  app.put("/api/admin/products/:id/feature", authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
+    try {
+      const { action } = req.body; // "APPROVE", "REJECT", "REMOVE"
+      
+      let updateData = {};
+      if (action === "APPROVE") {
+        updateData = { isFeatured: true, featureRequest: "NONE" };
+      } else if (action === "REJECT") {
+        updateData = { isFeatured: false, featureRequest: "REJECTED" };
+      } else if (action === "REMOVE") {
+        updateData = { isFeatured: false, featureRequest: "NONE" }; // إزالة منتج كان مميزاً
+      } else {
+        return res.status(400).json({ error: "إجراء غير صالح." });
+      }
+
+      const updatedProduct = await prisma.product.update({
+        where: { id: req.params.id },
+        data: updateData
+      });
+      
+      res.json({ message: "تم تحديث حالة تمييز المنتج.", product: updatedProduct });
+    } catch (error) {
+      res.status(500).json({ error: "فشل في تحديث حالة التمييز." });
+    }
+  });
 
 app.get("/api/admin/vendors", authenticateToken, isAdmin, async (req, res) => {
   try {

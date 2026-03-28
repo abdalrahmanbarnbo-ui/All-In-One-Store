@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingBag, Search, User, Menu, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Store, Megaphone, Loader2, X } from "lucide-react";
+import { ShoppingBag, Search, User, Menu, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Store, Megaphone, Loader2, X, Star } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useCart } from "../contexts/CartContext";
@@ -248,6 +248,7 @@ export default function Navbar() {
                           <Link to="/admin/vendors" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><LayoutDashboard className="w-4 h-4" /> إدارة البائعين</Link>
                           <Link to="/admin/orders" className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800" onClick={() => setIsProfileOpen(false)}><Package className="w-4 h-4" /> إدارة الطلبات</Link>
                           <Link to="/admin/ads" className="flex items-center gap-2 px-4 py-2 text-sm text-purple-600 dark:text-purple-400 font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20" onClick={() => setIsProfileOpen(false)}><Megaphone className="w-4 h-4" /> إدارة الإعلانات</Link>
+                          <Link to="/admin/featured" className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20" onClick={() => setIsProfileOpen(false)}><Star className="w-4 h-4" /> إدارة أفضل الخيارات</Link>
                         </>
                       )}
 

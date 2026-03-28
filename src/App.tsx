@@ -22,6 +22,7 @@ import VendorStore from "./pages/VendorStore";
 import Search from "./pages/Search";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import AdminFeatured from "./pages/admin/AdminFeatured";
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
                   <Route path="/checkout" element={<Checkout />} />
                  <Route path="/admin/orders" element={<AdminOrders />} />
                   <Route path="/vendor/settings" element={<VendorSettings />} />
+                  <Route path="/admin/featured" element={<AdminFeatured />} />
                   <Route path="/admin/vendors" element={<VendorOnboarding />} />
                 </Routes>
               </main>

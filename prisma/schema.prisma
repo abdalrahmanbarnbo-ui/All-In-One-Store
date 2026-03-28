@@ -60,7 +60,8 @@ model Product {
   sizes           Json          @default("[]") 
   vendorId        String
   vendor          VendorProfile @relation(fields: [vendorId], references: [id])
-  isFeatured      Boolean       @default(false)
+ isFeatured         Boolean  @default(false)
+  featureRequest     String   @default("NONE") // الحالات ستكون: NONE, PENDING, REJECTED
   createdAt       DateTime      @default(now())
 }
 

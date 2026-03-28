@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Loader2, PackageOpen } from "lucide-react";
+import { Loader2, PackageOpen, Star } from "lucide-react"; // تم إضافة Star هنا 🌟
 import { useLanguage } from "../contexts/LanguageContext";
 import { useCart } from "../contexts/CartContext";
 
@@ -60,13 +60,12 @@ export default function Category() {
 
   const handleQuickAdd = (e: React.MouseEvent, product: any) => {
     e.preventDefault(); 
-    // التأكد من أخذ السعر المخصوم إذا كان موجوداً
     const finalPrice = product.discountedPrice ? product.discountedPrice : product.price;
 
     addToCart({
       id: product.id,
       title: product.title,
-      price: finalPrice, // تم التعديل هنا
+      price: finalPrice,
       image: product.images?.[0] || "https://placehold.co/400x500",
       quantity: 1,
       stock: product.stock
@@ -102,30 +101,47 @@ export default function Category() {
           {products.map((product) => (
             <motion.div key={product.id} whileHover={{ y: -5 }} className="group cursor-pointer">
               <Link to={`/product/${product.id}`} className="block h-full">
-                <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 rounded-lg border border-neutral-200 dark:border-neutral-700">
+                
+                {/* 🌟 حاوية الصورة مع دعم حالة Best Choice والتوهج الذهبي 🌟 */}
+                <div className={`relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3 rounded-xl border transition-all duration-300 
+                  ${product.isFeatured 
+                    ? 'border-amber-200 dark:border-amber-900/50 shadow-[0_0_15px_rgba(245,158,11,0.15)] group-hover:shadow-[0_0_25px_rgba(245,158,11,0.3)]' 
+                    : 'border-neutral-200 dark:border-neutral-700'}`}>
                   
+                  {/* حاوية الشارات الذكية في الزاوية العلوية */}
+                  <div className="absolute top-2 start-2 flex flex-col gap-1.5 z-20">
+                    
+                    {/* 🌟 شارة Best Choice (تظهر إذا كان المنتج مميزاً) 🌟 */}
+                    {product.isFeatured && (
+                      <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1 shadow-md animate-in fade-in zoom-in duration-300">
+                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-white" />
+                        <span>Best Choice</span>
+                      </div>
+                    )}
+
+                    {/* شارة نفاذ الكمية */}
+                    {product.stock === 0 && (
+                      <div className="bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-md shadow-md w-fit">
+                        نفدت الكمية
+                      </div>
+                    )}
+                  </div>
+
                   <img 
                     src={product.images?.[0] || "https://placehold.co/400x500"} 
                     alt={product.title} 
                     className="w-full h-full object-contain p-2 bg-white group-hover:scale-105 transition-transform duration-500"
                   />
                   
-                  {/* شارة نفدت الكمية */}
-                  {product.stock === 0 && (
-                    <div className="absolute top-2 start-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-sm z-10">
-                      نفدت الكمية
-                    </div>
-                  )}
-
-                  {/* 🔴 شارة الخصم الجذابة 🔴 */}
+                  {/* شارة الخصم */}
                   {product.discountedPrice && product.stock > 0 && (
-                    <div className="absolute top-2 end-2 bg-red-500 text-white text-[10px] sm:text-xs font-black px-2 py-1 rounded shadow-sm z-10 animate-pulse">
+                    <div className="absolute top-2 end-2 bg-red-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 rounded shadow-md z-10 animate-pulse">
                       خصم!
                     </div>
                   )}
 
-                  {currentUser?.role === "CUSTOMER" && (
-                    <div className="absolute bottom-0 start-0 end-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  {(currentUser?.role === "USER" || currentUser?.role === "CUSTOMER") && (
+                    <div className="absolute bottom-0 start-0 end-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
                       <button 
                         disabled={product.stock === 0}
                         onClick={(e) => handleQuickAdd(e, product)}
@@ -138,9 +154,10 @@ export default function Category() {
                 </div>
                 
                 <div>
-                  <h3 className="text-sm font-medium text-neutral-900 dark:text-white truncate">{product.title}</h3>
+                  <h3 className="text-sm font-medium text-neutral-900 dark:text-white truncate" title={product.title}>
+                    {product.title}
+                  </h3>
                   
-                  {/* 🔴 تم التعديل هنا لعرض السعر المشطوب 🔴 */}
                   <div className="flex items-center gap-2 mt-1">
                     {product.discountedPrice ? (
                       <>
@@ -157,7 +174,6 @@ export default function Category() {
                       </span>
                     )}
                   </div>
-
                 </div>
               </Link>
             </motion.div>

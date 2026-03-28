@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { Trash2, ShoppingBag, ArrowRight, Package, MapPin, Star, Loader2, Clock } from "lucide-react";
+import { Trash2, ShoppingBag, ArrowRight, Package, MapPin, Star, Loader2, Clock, FileText, CheckCircle2 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 
 export default function Cart() {
@@ -31,7 +31,7 @@ export default function Cart() {
       });
       if (res.ok) {
         const data = await res.json();
-        // 🛡️ حماية: التأكد من أن البيانات المستقبلة هي مصفوفة فعلاً
+        // 🛡️ حماية: التأكد من أن البيانات المستقبلة هي مصفوفة
         if (Array.isArray(data)) {
           setOrders(data);
         } else {
@@ -48,11 +48,11 @@ export default function Cart() {
   // شارات أنيقة لحالة الطلب
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'قيد المعالجة': return <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">قيد المعالجة ⏳</span>;
-      case 'تم الشحن': return <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">في الطريق إليك 🚚</span>;
-      case 'تم التوصيل': return <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">تم التوصيل ✅</span>;
-      case 'ملغي': return <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">ملغي ❌</span>;
-      default: return <span className="bg-neutral-100 text-neutral-700 px-3 py-1 rounded-full text-xs font-bold">{status}</span>;
+      case 'قيد المعالجة': return <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm">⏳ قيد المعالجة</span>;
+      case 'تم الشحن': return <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm">🚚 في الطريق إليك</span>;
+      case 'تم التوصيل': return <span className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm"><CheckCircle2 className="w-4 h-4"/> تم التوصيل</span>;
+      case 'ملغي': return <span className="bg-red-100 text-red-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 shadow-sm">❌ ملغي</span>;
+      default: return <span className="bg-neutral-100 text-neutral-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">{status}</span>;
     }
   };
 
@@ -67,10 +67,10 @@ export default function Cart() {
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ rating })
       });
-      if (res.ok) alert("شكراً لتقييمك! ⭐");
-      else alert("تعذر حفظ التقييم.");
+      if (res.ok) alert("شكراً لتقييمك! ⭐ رأيك يهمنا جداً.");
+      else alert("تعذر حفظ التقييم. حاول مرة أخرى.");
     } catch (err) {
-      alert("حدث خطأ في الاتصال.");
+      alert("حدث خطأ في الاتصال بالخادم.");
     } finally {
       setRatingLoading(null);
     }
@@ -103,7 +103,7 @@ export default function Cart() {
       ) : (
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* قسم قائمة المنتجات */}
+          {/* قسم قائمة المنتجات في السلة */}
           <div className="lg:w-2/3">
             <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
               <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -157,7 +157,7 @@ export default function Cart() {
             </div>
           </div>
 
-          {/* قسم ملخص الطلب */}
+          {/* قسم ملخص الطلب الحالي */}
           <div className="lg:w-1/3">
             <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 sticky top-24">
               <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-6">ملخص الطلب</h2>
@@ -193,24 +193,25 @@ export default function Cart() {
 
       {/* 📦 --- القسم الثاني: حالة الطلبات السابقة للمستخدم --- 📦 */}
       {currentUser && currentUser.role !== "ADMIN" && (
-        <div className="mt-20 pt-10 border-t-2 border-neutral-100 dark:border-neutral-800">
+        <div className="mt-20 pt-12 border-t-2 border-neutral-100 dark:border-neutral-800">
           <div className="flex items-center gap-3 mb-8">
             <Package className="w-8 h-8 text-emerald-600" />
-            <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">حالة طلباتي السابقة</h2>
+            <h2 className="text-3xl font-bold text-neutral-900 dark:text-white">طلباتي السابقة</h2>
           </div>
 
           {loadingOrders ? (
-            <div className="py-12 flex justify-center"><Loader2 className="w-8 h-8 text-emerald-600 animate-spin" /></div>
+            <div className="py-12 flex justify-center"><Loader2 className="w-10 h-10 text-emerald-600 animate-spin" /></div>
           ) : orders.length === 0 ? (
-            <div className="text-center py-12 bg-neutral-50 dark:bg-neutral-800/30 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-700">
-              <Clock className="w-12 h-12 mx-auto text-neutral-400 mb-3" />
-              <p className="text-neutral-500 font-medium">ليس لديك أي طلبات سابقة حتى الآن.</p>
+            <div className="text-center py-16 bg-neutral-50 dark:bg-neutral-800/30 rounded-3xl border border-dashed border-neutral-200 dark:border-neutral-700">
+              <Clock className="w-16 h-16 mx-auto text-neutral-400 mb-4" />
+              <p className="text-lg text-neutral-600 font-bold">ليس لديك أي طلبات سابقة حتى الآن.</p>
+              <p className="text-sm text-neutral-500 mt-2">تسوق الآن وتابع حالة طلباتك من هنا.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-8">
               {orders.map((order) => {
                 
-                // 🛡️ حماية متقدمة: ضمان أن الطلبات قابلة للقراءة (JSON.parse) حتى لو كانت نصوصاً
+                // 🛡️ حماية متقدمة للبيانات
                 let safeOrderItems = [];
                 try {
                   safeOrderItems = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
@@ -218,70 +219,81 @@ export default function Cart() {
                   safeOrderItems = [];
                 }
 
-                // 🛡️ حماية الـ ID
                 const safeOrderId = order.id ? order.id.split('-')[0].toUpperCase() : 'UNKNOWN';
+                const isDelivered = order.status === "تم التوصيل";
 
                 return (
-                  <div key={order.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div key={order.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     
-                    {/* رأس الطلب */}
-                    <div className="flex flex-wrap justify-between items-center gap-4 mb-4 border-b border-neutral-100 dark:border-neutral-800 pb-4">
-                      <div>
-                        <p className="text-xs text-neutral-500 font-bold mb-1">رقم الطلب</p>
-                        <p className="font-mono text-sm font-black text-neutral-900 dark:text-white">#{safeOrderId}</p>
+                    {/* رأس الفاتورة (Order Header) */}
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 p-6 border-b border-neutral-200 dark:border-neutral-800 flex flex-wrap justify-between items-center gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-white dark:bg-neutral-800 p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                          <FileText className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-neutral-500 font-bold mb-1">رقم الطلب</p>
+                          <p className="font-mono text-lg font-black text-neutral-900 dark:text-white">#{safeOrderId}</p>
+                        </div>
                       </div>
                       <div>{getStatusBadge(order.status || '')}</div>
                     </div>
 
-                    {/* عنوان التوصيل */}
-                    <div className="mb-4">
-                      <p className="text-xs text-neutral-500 font-bold mb-1 flex items-center gap-1"><MapPin className="w-3.5 h-3.5"/> التوصيل إلى</p>
-                      <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{order.city} - {order.address}</p>
-                    </div>
-
-                    {/* المنتجات مع التقييم */}
-                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 border border-neutral-100 dark:border-neutral-800">
-                      <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-3">المنتجات المشتراة:</p>
-                      <div className="space-y-3">
-                        {safeOrderItems.map((item: any, idx: number) => {
-                          const safeProductId = item.id ? item.id.split('-')[0] : '';
-                          
-                          return (
-                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700 shadow-sm">
-                              
-                              <Link to={`/product/${safeProductId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                                <img src={item.image || "https://placehold.co/100x100"} alt="product" className="w-12 h-12 rounded-lg object-cover border border-neutral-100" />
-                                <div>
-                                  <p className="text-sm font-bold text-neutral-900 dark:text-white truncate max-w-[200px]">{item.title || "منتج غير معروف"}</p>
-                                  <p className="text-xs text-emerald-600 font-bold mt-0.5">الكمية: {item.quantity || 1}</p>
-                                </div>
-                              </Link>
-
-                              {/* 🌟 نظام التقييم (يظهر فقط إذا استلم الزبون الطلب) 🌟 */}
-                              {order.status === "تم التوصيل" && (
-                                <div className="flex flex-col items-start sm:items-end bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30">
-                                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 mb-1">قيّم المنتج بعد تجربته</p>
-                                  <div className="flex items-center gap-1">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <button
-                                        key={star}
-                                        onClick={() => handleRateProduct(item.id || '', star)}
-                                        disabled={ratingLoading === safeProductId}
-                                        className="text-amber-200 dark:text-neutral-600 hover:text-amber-500 transition-colors focus:outline-none disabled:opacity-50"
-                                        title={`تقييم بـ ${star} نجوم`}
-                                      >
-                                        <Star className="w-5 h-5 hover:fill-amber-500 transition-all hover:scale-110" />
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                    <div className="p-6">
+                      {/* عنوان التوصيل */}
+                      <div className="mb-6 bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                        <p className="text-sm text-neutral-500 font-bold mb-2 flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-600"/> التوصيل إلى:</p>
+                        <p className="text-base font-bold text-neutral-800 dark:text-neutral-200">{order.city} - <span className="font-medium text-neutral-600 dark:text-neutral-400">{order.address}</span></p>
                       </div>
-                    </div>
 
+                      {/* 🌟 تفاصيل الطلب (Order Details) 🌟 */}
+                      <div className="border border-neutral-100 dark:border-neutral-800 rounded-2xl overflow-hidden">
+                        <div className="bg-neutral-50 dark:bg-neutral-800/30 px-5 py-3 border-b border-neutral-100 dark:border-neutral-800">
+                          <h3 className="font-bold text-neutral-800 dark:text-neutral-200">تفاصيل الطلب</h3>
+                        </div>
+                        
+                        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                          {safeOrderItems.map((item: any, idx: number) => {
+                            const safeProductId = item.id ? item.id.split('-')[0] : '';
+                            
+                            return (
+                              <div key={idx} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white dark:bg-neutral-900">
+                                
+                                {/* معلومات المنتج */}
+                                <Link to={`/product/${safeProductId}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity group">
+                                  <img src={item.image || "https://placehold.co/100x100"} alt="product" className="w-16 h-16 rounded-xl object-cover border border-neutral-200 dark:border-neutral-700 shadow-sm group-hover:border-emerald-500 transition-colors" />
+                                  <div>
+                                    <p className="text-base font-bold text-neutral-900 dark:text-white line-clamp-1 max-w-[250px]">{item.title || "منتج غير معروف"}</p>
+                                    <p className="text-sm text-neutral-500 mt-1 font-medium">الكمية: <span className="font-bold text-neutral-900 dark:text-white">{item.quantity || 1}</span></p>
+                                  </div>
+                                </Link>
+
+                                {/* 🌟 التقييم (يظهر فقط إذا استلم الزبون الطلب) 🌟 */}
+                                {isDelivered && (
+                                  <div className="flex flex-col items-start sm:items-end bg-amber-50/50 dark:bg-amber-900/10 p-3 sm:p-4 rounded-xl border border-amber-100 dark:border-amber-900/30 w-full sm:w-auto">
+                                    <p className="text-xs font-bold text-amber-700 dark:text-amber-500 mb-2">كيف تقيم هذا المنتج؟</p>
+                                    <div className="flex items-center gap-1">
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                          key={star}
+                                          onClick={() => handleRateProduct(item.id || '', star)}
+                                          disabled={ratingLoading === safeProductId}
+                                          className="text-amber-200 dark:text-neutral-600 hover:text-amber-500 transition-all focus:outline-none disabled:opacity-50 hover:scale-125 hover:-translate-y-1"
+                                          title={`تقييم بـ ${star} نجوم`}
+                                        >
+                                          <Star className="w-6 h-6 hover:fill-amber-500" />
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
                 );
               })}

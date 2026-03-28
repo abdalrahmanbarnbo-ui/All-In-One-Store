@@ -5,11 +5,9 @@ import { Trash2, ShoppingBag, ArrowRight, Package, MapPin, Star, Loader2, Clock 
 import { useCart } from "../contexts/CartContext";
 
 export default function Cart() {
-  // استخدام المتغيرات الخاصة بك تماماً كما أرسلتها
   const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
   const navigate = useNavigate();
 
-  // حالات (States) لتتبع المستخدم والطلبات والتقييم
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -23,7 +21,7 @@ export default function Cart() {
     }
   }, []);
 
-  // جلب طلبات الزبون من السيرفر
+  // جلب طلبات الزبون من السيرفر مع حماية إضافية
   const fetchMyOrders = async () => {
     setLoadingOrders(true);
     try {
@@ -31,7 +29,15 @@ export default function Cart() {
       const res = await fetch("/api/user/orders", {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (res.ok) setOrders(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        // 🛡️ حماية: التأكد من أن البيانات المستقبلة هي مصفوفة فعلاً
+        if (Array.isArray(data)) {
+          setOrders(data);
+        } else {
+          setOrders([]);
+        }
+      }
     } catch (err) {
       console.error("فشل في جلب الطلبات", err);
     } finally {
@@ -52,7 +58,7 @@ export default function Cart() {
 
   // دالة إرسال تقييم المنتج
   const handleRateProduct = async (rawProductId: string, rating: number) => {
-    const productId = rawProductId.split('-')[0]; 
+    const productId = rawProductId?.split('-')[0] || rawProductId; 
     setRatingLoading(productId);
     try {
       const token = localStorage.getItem("token");
@@ -75,10 +81,10 @@ export default function Cart() {
       
       {/* 🛒 --- القسم الأول: سلة المشتريات الحالية --- 🛒 */}
       <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-8 flex items-center gap-3">
-        <ShoppingBag className="w-8 h-8 text-emerald-600" /> سلة المشتريات {cartItems.length > 0 && `(${cartItems.length})`}
+        <ShoppingBag className="w-8 h-8 text-emerald-600" /> سلة المشتريات {(cartItems?.length || 0) > 0 && `(${cartItems.length})`}
       </h1>
 
-      {cartItems.length === 0 ? (
+      {(!cartItems || cartItems.length === 0) ? (
         <div className="min-h-[40vh] flex flex-col items-center justify-center px-4 bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-100 dark:border-neutral-800 shadow-sm py-16">
           <div className="w-24 h-24 bg-neutral-50 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6">
             <ShoppingBag className="w-12 h-12 text-neutral-400" />
@@ -185,7 +191,7 @@ export default function Cart() {
         </div>
       )}
 
-      {/* 📦 --- القسم الثاني: حالة الطلبات السابقة للمستخدم (تظهر دائماً في الأسفل) --- 📦 */}
+      {/* 📦 --- القسم الثاني: حالة الطلبات السابقة للمستخدم --- 📦 */}
       {currentUser && currentUser.role !== "ADMIN" && (
         <div className="mt-20 pt-10 border-t-2 border-neutral-100 dark:border-neutral-800">
           <div className="flex items-center gap-3 mb-8">
@@ -202,65 +208,83 @@ export default function Cart() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6">
-              {orders.map((order) => (
-                <div key={order.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                  
-                  {/* رأس الطلب */}
-                  <div className="flex flex-wrap justify-between items-center gap-4 mb-4 border-b border-neutral-100 dark:border-neutral-800 pb-4">
-                    <div>
-                      <p className="text-xs text-neutral-500 font-bold mb-1">رقم الطلب</p>
-                      <p className="font-mono text-sm font-black text-neutral-900 dark:text-white">#{order.id.split('-')[0].toUpperCase()}</p>
+              {orders.map((order) => {
+                
+                // 🛡️ حماية متقدمة: ضمان أن الطلبات قابلة للقراءة (JSON.parse) حتى لو كانت نصوصاً
+                let safeOrderItems = [];
+                try {
+                  safeOrderItems = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+                } catch (e) {
+                  safeOrderItems = [];
+                }
+
+                // 🛡️ حماية الـ ID
+                const safeOrderId = order.id ? order.id.split('-')[0].toUpperCase() : 'UNKNOWN';
+
+                return (
+                  <div key={order.id} className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                    
+                    {/* رأس الطلب */}
+                    <div className="flex flex-wrap justify-between items-center gap-4 mb-4 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                      <div>
+                        <p className="text-xs text-neutral-500 font-bold mb-1">رقم الطلب</p>
+                        <p className="font-mono text-sm font-black text-neutral-900 dark:text-white">#{safeOrderId}</p>
+                      </div>
+                      <div>{getStatusBadge(order.status || '')}</div>
                     </div>
-                    <div>{getStatusBadge(order.status)}</div>
-                  </div>
 
-                  {/* عنوان التوصيل */}
-                  <div className="mb-4">
-                    <p className="text-xs text-neutral-500 font-bold mb-1 flex items-center gap-1"><MapPin className="w-3.5 h-3.5"/> التوصيل إلى</p>
-                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{order.city} - {order.address}</p>
-                  </div>
+                    {/* عنوان التوصيل */}
+                    <div className="mb-4">
+                      <p className="text-xs text-neutral-500 font-bold mb-1 flex items-center gap-1"><MapPin className="w-3.5 h-3.5"/> التوصيل إلى</p>
+                      <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{order.city} - {order.address}</p>
+                    </div>
 
-                  {/* المنتجات مع التقييم */}
-                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 border border-neutral-100 dark:border-neutral-800">
-                    <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-3">المنتجات المشتراة:</p>
-                    <div className="space-y-3">
-                      {order.items.map((item: any, idx: number) => (
-                        <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700 shadow-sm">
+                    {/* المنتجات مع التقييم */}
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 border border-neutral-100 dark:border-neutral-800">
+                      <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-3">المنتجات المشتراة:</p>
+                      <div className="space-y-3">
+                        {safeOrderItems.map((item: any, idx: number) => {
+                          const safeProductId = item.id ? item.id.split('-')[0] : '';
                           
-                          <Link to={`/product/${item.id.split('-')[0]}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                            <img src={item.image || "https://placehold.co/100x100"} alt="product" className="w-12 h-12 rounded-lg object-cover border border-neutral-100" />
-                            <div>
-                              <p className="text-sm font-bold text-neutral-900 dark:text-white truncate max-w-[200px]">{item.title}</p>
-                              <p className="text-xs text-emerald-600 font-bold mt-0.5">الكمية: {item.quantity}</p>
-                            </div>
-                          </Link>
+                          return (
+                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-neutral-900 p-3 rounded-xl border border-neutral-100 dark:border-neutral-700 shadow-sm">
+                              
+                              <Link to={`/product/${safeProductId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                <img src={item.image || "https://placehold.co/100x100"} alt="product" className="w-12 h-12 rounded-lg object-cover border border-neutral-100" />
+                                <div>
+                                  <p className="text-sm font-bold text-neutral-900 dark:text-white truncate max-w-[200px]">{item.title || "منتج غير معروف"}</p>
+                                  <p className="text-xs text-emerald-600 font-bold mt-0.5">الكمية: {item.quantity || 1}</p>
+                                </div>
+                              </Link>
 
-                          {/* 🌟 نظام التقييم (يظهر فقط إذا استلم الزبون الطلب) 🌟 */}
-                          {order.status === "تم التوصيل" && (
-                            <div className="flex flex-col items-start sm:items-end bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30">
-                              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 mb-1">قيّم المنتج بعد تجربته</p>
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <button
-                                    key={star}
-                                    onClick={() => handleRateProduct(item.id, star)}
-                                    disabled={ratingLoading === item.id.split('-')[0]}
-                                    className="text-amber-200 dark:text-neutral-600 hover:text-amber-500 transition-colors focus:outline-none disabled:opacity-50"
-                                    title={`تقييم بـ ${star} نجوم`}
-                                  >
-                                    <Star className="w-5 h-5 hover:fill-amber-500 transition-all hover:scale-110" />
-                                  </button>
-                                ))}
-                              </div>
+                              {/* 🌟 نظام التقييم (يظهر فقط إذا استلم الزبون الطلب) 🌟 */}
+                              {order.status === "تم التوصيل" && (
+                                <div className="flex flex-col items-start sm:items-end bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                                  <p className="text-[10px] font-bold text-amber-700 dark:text-amber-500 mb-1">قيّم المنتج بعد تجربته</p>
+                                  <div className="flex items-center gap-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        key={star}
+                                        onClick={() => handleRateProduct(item.id || '', star)}
+                                        disabled={ratingLoading === safeProductId}
+                                        className="text-amber-200 dark:text-neutral-600 hover:text-amber-500 transition-colors focus:outline-none disabled:opacity-50"
+                                        title={`تقييم بـ ${star} نجوم`}
+                                      >
+                                        <Star className="w-5 h-5 hover:fill-amber-500 transition-all hover:scale-110" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ))}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
 
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

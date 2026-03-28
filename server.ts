@@ -455,17 +455,33 @@ app.put("/api/vendor/orders/:id/status", authenticateToken, isApprovedVendor, as
 // ==========================================
 // جلب المنتجات التي طلب أصحابها تمييزها، بالإضافة للمميزة حالياً (للآدمن)
 // 1. جلب طلبات الزبون (لصفحة المشتري)
-  app.get("/api/user/orders", authenticateToken, async (req: AuthRequest, res: Response) => {
-    try {
-      const orders = await prisma.order.findMany({
-        where: { userId: req.user.id }, // يجلب طلبات هذا المستخدم فقط
-        orderBy: { createdAt: "desc" }
-      });
-      res.json(orders);
-    } catch (error) {
-      res.status(500).json({ error: "فشل في جلب الطلبات." });
+ // جلب طلبات الزبون (لصفحة المشتري)
+app.get("/api/user/orders", authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    // 🛡️ 1. التأكد من استخراج الـ ID الصحيح من التوكن (حسب طريقة تشفيرك له)
+    const userId = req.user?.id || req.user?.userId;
+
+    // 🛡️ 2. منع Prisma من جلب كل الطلبات إذا كان الـ ID مفقوداً
+    if (!userId) {
+      return res.status(401).json({ error: "غير مصرح لك بجلب هذه الطلبات، معرف المستخدم مفقود." });
     }
-  }); 
+
+    // 🛡️ 3. جلب الطلبات التي تخص هذا المستخدم فقط
+    const orders = await prisma.order.findMany({
+      where: { 
+        userId: userId // الفلتر الأساسي الذي يمنع ظهور طلبات الآخرين
+      },
+      orderBy: { 
+        createdAt: "desc" 
+      }
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    res.status(500).json({ error: "فشل في جلب الطلبات." });
+  }
+});
 app.get("/api/admin/feature-requests", authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
     try {
       const products = await prisma.product.findMany({

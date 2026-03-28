@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingBag, Search, User, Menu, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Store, Megaphone, Loader2 } from "lucide-react";
+import { ShoppingBag, Search, User, Menu, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Store, Megaphone, Loader2, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useCart } from "../contexts/CartContext";
@@ -19,6 +19,9 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [liveResults, setLiveResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // --- 🌟 حالة قائمة الموبايل 🌟 ---
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // حالة لحفظ بيانات المستخدم المسجل
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -42,6 +45,7 @@ export default function Navbar() {
     localStorage.removeItem("user");
     setCurrentUser(null);
     setIsProfileOpen(false);
+    setIsMobileMenuOpen(false);
     window.dispatchEvent(new Event("userAuthChanged")); 
     navigate("/login"); 
   };
@@ -87,10 +91,15 @@ export default function Navbar() {
           
           {/* Logo & Mobile Menu */}
           <div className="flex items-center">
-            <button className="p-2 -ms-2 me-2 md:hidden text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white">
-              <Menu className="w-6 h-6" />
+            {/* 🌟 زر قائمة الموبايل 🌟 */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 -ms-2 me-2 md:hidden text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <Link to="/" className="flex items-center gap-2">
+
+            <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
               <ShoppingBag className="w-8 h-8 text-emerald-600 dark:text-emerald-500" />
               <span className="font-bold text-xl tracking-tight text-neutral-900 dark:text-white">All in One</span>
             </Link>
@@ -133,7 +142,7 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* 🔍 Smart Live Search Bar (تم الإصلاح هنا) */}
+            {/* 🔍 Smart Live Search Bar */}
             <div className="hidden sm:flex items-center">
               <form 
                 onSubmit={(e) => {
@@ -278,6 +287,52 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* 🌟 القائمة المنسدلة لشاشات الموبايل 🌟 */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-in slide-in-from-top-2 duration-200">
+          <div className="px-4 pt-2 pb-4 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-4 py-3 rounded-xl text-base font-bold transition-colors ${
+                  location.pathname === link.path || (location.pathname === "/" && link.path === "/")
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-500"
+                    : "text-neutral-700 hover:bg-neutral-50 hover:text-emerald-600 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-emerald-400"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            
+            {/* شريط البحث الخاص بالموبايل */}
+            <form 
+              onSubmit={(e) => { 
+                e.preventDefault(); 
+                if (searchQuery.trim()) { 
+                  navigate(`/search?q=${encodeURIComponent(searchQuery)}`); 
+                  setIsMobileMenuOpen(false); 
+                  setSearchQuery(""); 
+                } 
+              }} 
+              className="relative mt-4"
+            >
+              <input 
+                type="text" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                placeholder="ابحث عن منتج..." 
+                className="w-full px-4 py-3 text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <button type="submit" className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-emerald-600">
+                <Search className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

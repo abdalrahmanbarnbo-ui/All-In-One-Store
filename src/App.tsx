@@ -21,16 +21,19 @@ import AdminAds from "./pages/admin/AdminAds";
 import VendorStore from "./pages/VendorStore";
 import Search from "./pages/Search";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <LanguageProvider>
-        {/* تغليف التطبيق بالكامل بسلة المشتريات لكي تظهر في كل مكان */}
-        <CartProvider>
-          <BrowserRouter>
-            <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col font-sans text-neutral-900 dark:text-neutral-50 transition-colors duration-300">
-              <Navbar />
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <LanguageProvider>
+      <CartProvider>
+        <BrowserRouter>
+          {/* 🌟 هذا المكون سيعيد الشاشة للأعلى مع كل انتقال 🌟 */}
+          <ScrollToTop />
+          
+          <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white transition-colors duration-300 font-cairo flex flex-col">
+            <Navbar />
               <main className="flex-1">
                 <Routes>
                   <Route path="/" element={<Home />} />
